@@ -57,6 +57,7 @@ interface ParsedIDCardData {
   address: string | null;
   dateOfIssue: string | null;
   dateOfExpiry: string | null;
+  religion: string | null;
 }
 
 /**
@@ -76,62 +77,73 @@ function parseThaiIDCard(rawText: string): ParsedIDCardData {
     address: null,
     dateOfIssue: null,
     dateOfExpiry: null,
+    religion: null,
   };
 
   try {
-    // 1. หาเลขบัตรประชาชน
+    // 1. เลขบัตร (เหมือนเดิม)
     let idMatch = rawText.match(/เลขประจำตัวประชาชน\s*([\d\s]{13,})/);
     if (idMatch && idMatch[1]) {
       data.idNumber = idMatch[1].replace(/\s/g, ''); 
     }
 
-    // 2. หาชื่อ (Thai) - (จับ Prefix)
+    // 2. ชื่อไทย (เหมือนเดิม)
     let thaiNameMatch = rawText.match(
       /ชื่อตัวและชื่อสกุล\s*(นาย|นางสาว|นาง|ด\.ช\.|ด\.ญ\.)\s*([^\s]+)\s*([^\n\r]+)/
     );
     if (thaiNameMatch && thaiNameMatch[1] && thaiNameMatch[2] && thaiNameMatch[3]) {
-      data.prefixThai = thaiNameMatch[1].trim();     // กลุ่ม 1
-      data.firstNameThai = thaiNameMatch[2].trim(); // กลุ่ม 2
-      data.lastNameThai = thaiNameMatch[3].trim();  // กลุ่ม 3
+      data.prefixThai = thaiNameMatch[1].trim();
+      data.firstNameThai = thaiNameMatch[2].trim();
+      data.lastNameThai = thaiNameMatch[3].trim();
     }
 
-    // 3. หาชื่อ (English)
-    // 3a. Prefix + First Name (จากบรรทัด "Name Mr. Meenoy")
-    let engNameMatch = rawText.match(/\nName\s*([A-Za-z\.]+)\s*([A-Za-z]+)/);
+    // 3. ชื่ออังกฤษ
+    // 3a. First Name (เหมือนเดิม)
+    let engNameMatch = rawText.match(/Name\s*([A-Za-z\.]+)\s*([A-Za-z]+)/);
     if (engNameMatch && engNameMatch[1] && engNameMatch[2]) {
-      data.prefixEng = engNameMatch[1].trim();     // กลุ่ม 1 (Mr.)
-      data.firstNameEng = engNameMatch[2].trim(); // กลุ่ม 2 (Meenoy)
+      data.prefixEng = engNameMatch[1].trim();
+      data.firstNameEng = engNameMatch[2].trim();
     }
 
-    // 3b. Last Name (จากบรรทัด "Last Name Koyruk")
-    let engLastNameMatch = rawText.match(/\nLast Name\s*([A-Za-z]+)/);
+    // 3b. Last Name [FIX]
+    // แก้ไข: เปลี่ยน "Last Name" (2 คำ) เป็น "Last name" (n เล็ก)
+    let engLastNameMatch = rawText.match(/[Ll]ast\s*name\s*([A-Za-z]+)/);
     if (engLastNameMatch && engLastNameMatch[1]) {
-      data.lastNameEng = engLastNameMatch[1].trim(); // กลุ่ม 1 (Koyruk)
+      data.lastNameEng = engLastNameMatch[1].trim();
     }
 
-    // 4. หาวันเกิด
-    let dobMatch = rawText.match(/เกิดวันที่\s*(\d{1,2}\s*[ก-๙.]+\s*\d{4})/);
+    // 4. วันเกิด (เหมือนเดิม)
+    let dobMatch = rawText.match(/เกิดวันที่\s*(\d{1,2}\s*[ก-๙\.]+\s*\d{4})/);
     if (dobMatch && dobMatch[1]) {
       data.dob = parseThaiDate(dobMatch[1]);
     }
 
-    // 5. หาที่อยู่
+    // 5. [เพิ่มใหม่] ศาสนา
+    // หาคำว่า "ศาสนา" แล้วเอาข้อความที่อยู่ข้างหลังมา
+    let religionMatch = rawText.match(/ศาสนา\s*([^\n\r]+)/);
+    if (religionMatch && religionMatch[1]) {
+      data.religion = religionMatch[1].trim();
+    }
+
+    // 6. ที่อยู่ (เหมือนเดิม)
     let addressMatch = rawText.match(/ที่อยู่\s*([^\n\r]+)/);
     if (addressMatch && addressMatch[1]) {
       data.address = addressMatch[1].trim();
     }
 
-    // 6. หาวันออกบัตร
+    // 7. วันออกบัตร [FIX]
+    // แก้ไข: สลับลำดับ จาก (วันที่) (คำ) เป็น (คำ) (วันที่)
     let issueDateMatch = rawText.match(
-      /(\d{1,2}\s*[ก-๙.]+\s*\d{4})\s*วันออกบัตร/
+      /วันออกบัตร\s*(\d{1,2}\s*[ก-๙\.]+\s*\d{4})/
     );
     if (issueDateMatch && issueDateMatch[1]) {
       data.dateOfIssue = parseThaiDate(issueDateMatch[1]);
     }
 
-    // 7. หาวันหมดอายุ
+    // 8. วันหมดอายุ [FIX]
+    // แก้ไข: สลับลำดับ เหมือนวันออกบัตร
     let expiryDateMatch = rawText.match(
-      /(\d{1,2}\s*[ก-๙.]+\s*\d{4})\s*วันบัตรหมดอายุ/
+      /วันบัตรหมดอายุ\s*(\d{1,2}\s*[ก-๙\.]+\s*\d{4})/
     );
     if (expiryDateMatch && expiryDateMatch[1]) {
       data.dateOfExpiry = parseThaiDate(expiryDateMatch[1]);
@@ -143,7 +155,6 @@ function parseThaiIDCard(rawText: string): ParsedIDCardData {
 
   return data;
 }
-
 
 // --- (2) Main Service Function (Exported) ---
 

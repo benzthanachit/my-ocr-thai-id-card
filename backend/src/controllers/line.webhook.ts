@@ -81,16 +81,25 @@ async function handleMessageEvent(event: line.MessageEvent) {
       pendingConfirmations[userId] = parsedData;
 
       // 4. สร้างข้อความตอบกลับเพื่อ "ยืนยัน"
-      const confirmationText = `
-ข้อมูลที่อ่านได้:
+      // --- [ข้อมูลดิบ (Raw Text)] ---
+        // ${rawText}
+        // --- [จบข้อมูลดิบ] ---
+    const confirmationText = `
+ข้อมูลที่อ่านได้ (ทั้งหมดที่จะบันทึก):
 เลขบัตร: ${parsedData.idNumber}
-ชื่อ: ${parsedData.prefixThai} ${parsedData.firstNameThai} ${parsedData.lastNameThai}
+
+ชื่อ (ไทย): ${parsedData.prefixThai} ${parsedData.firstNameThai} ${parsedData.lastNameThai}
+Name (Eng): ${parsedData.prefixEng} ${parsedData.firstNameEng} ${parsedData.lastNameEng}
+
 วันเกิด: ${parsedData.dob} (YYYY-MM-DD)
 ที่อยู่: ${parsedData.address}
 
+วันออกบัตร: ${parsedData.dateOfIssue} (YYYY-MM-DD)
+วันหมดอายุ: ${parsedData.dateOfExpiry} (YYYY-MM-DD)
+
 ข้อมูลถูกต้องหรือไม่?
 (กรุณาพิมพ์ "ถูก" เพื่อยืนยัน หรือส่งรูปใหม่หากข้อมูลผิด)
-      `.trim(); // .trim() เพื่อลบช่องว่างหัวท้าย
+    `.trim();
 
       await replyMessage(event.replyToken, confirmationText);
 

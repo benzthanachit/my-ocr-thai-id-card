@@ -19,6 +19,7 @@ export interface IUser extends Document {
   address?: string;
   dateOfIssue?: Date;
   dateOfExpiry?: Date;
+  religion?: string;
 }
 
 // 2. อัปเดต Schema ให้ตรงกับ Interface
@@ -39,6 +40,7 @@ const UserSchema: Schema = new Schema(
     address: { type: String },
     dateOfIssue: { type: Date },
     dateOfExpiry: { type: Date },
+    religion: { type: String },
   },
   { timestamps: true } // เก็บ createdAt, updatedAt อัตโนมัติ
 );
