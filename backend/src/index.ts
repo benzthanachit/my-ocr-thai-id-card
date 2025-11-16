@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './configs/db';
 import userRoutes from './routes/user.routes';
 import ocrRoutes from './routes/ocr.routes';
+import { lineWebhook } from './controllers/line.webhook';
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,7 @@ app.use(express.json()); // ให้ Express อ่าน JSON body ได้
 // Routes
 app.use('/api', userRoutes);
 app.use('/api', ocrRoutes);
+app.post('/webhook', lineWebhook);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
